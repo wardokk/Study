@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyForge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --desk: #E6EAEE;
+    --paper: #FFFFFF;
+    --ink: #1F2A37;
+    --ink-soft: #5B6878;
+    --rule: #D3E2F1;
+    --margin: #E39A9E;
+    --pen: #2F5DA8;
+    --pen-dark: #22467F;
+    --highlight: #F6E65B;
+    --good: #2E7D5B;
+    --bad: #B4443F;
+    --line: #CBD3DC;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px; line-height: 1.5; color: var(--ink); background: var(--desk);
+  }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--pen); outline-offset: 2px; }
+
+  .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+
+  /* ---------- Sidebar: binder tabs ---------- */
+  .sidebar { background: var(--ink); color: #E9EEF4; padding: 24px 0 16px; display: flex; flex-direction: column; }
+  .brand { padding: 0 20px 20px; }
+  .brand h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+  .brand p { margin: 2px 0 0; font-size: 13px; color: #9FB0C3; }
+  .side-heading { padding: 0 20px 8px; font-size: 13px; color: #9FB0C3; }
+  #classList { display: flex; flex-direction: column; gap: 4px; padding-right: 0; }
+  .tab {
+    display: flex; align-items: center; gap: 10px; width: calc(100% - 12px);
+    background: transparent; border: 0; text-align: left; cursor: pointer;
+    padding: 10px 14px 10px 20px; border-radius: 0 var(--radius-md) var(--radius-md) 0; color: #E9EEF4;
+  }
+  .tab:hover { background: rgba(255,255,255,0.06); }
+  .tab .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .tab .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tab .count { font-size: 12px; color: #9FB0C3; }
+  .tab.active { background: var(--desk); color: var(--ink); width: 100%; border-radius: var(--radius-md) 0 0 var(--radius-md); margin-left: 12px; padding-left: 8px; }
+  .tab.active .count { color: var(--ink-soft); }
+  .new-class { padding: 10px 20px; }
+  .new-class form, .new-class .row { display: flex; gap: 6px; }
+  .new-class input { flex: 1; min-width: 0; padding: 7px 9px; border-radius: var(--radius-sm); border: 1px solid #45556A; background: #2A3747; color: #fff; }
+  .link-btn { background: none; border: 0; color: #C9D6E4; cursor: pointer; padding: 6px 0; text-decoration: underline; text-underline-offset: 3px; }
+  .side-foot { margin-top: auto; padding: 16px 20px 0; border-top: 1px solid #34435A; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+  .side-foot .note { font-size: 12px; color: #9FB0C3; margin-top: 6px; }
+
+  /* ---------- Main ---------- */
+  main { padding: 28px 36px 60px; max-width: 1040px; width: 100%; }
+  .class-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+  .class-head h2 { margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -0.015em; }
+  .class-head .actions { margin-left: auto; display: flex; gap: 8px; }
+  .nav { display: flex; gap: 2px; border-bottom: 2px solid var(--line); margin-bottom: 24px; flex-wrap: wrap; }
+  .nav button { background: none; border: 0; padding: 10px 16px; cursor: pointer; color: var(--ink-soft); border-bottom: 3px solid transparent; margin-bottom: -2px; }
+  .nav button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--pen); font-weight: 700; }
+  .nav .badge { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 6px; border-radius: 10px; background: var(--pen); color: #fff; font-size: 12px; text-align: center; }
+
+  .panel { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 22px; margin-bottom: 18px; }
+  .panel h3 { margin: 0 0 4px; font-size: 19px; }
+  .panel .sub { margin: 0 0 14px; color: var(--ink-soft); font-size: 15px; }
+  label.field { display: block; font-size: 14px; color: var(--ink-soft); margin-bottom: 4px; }
+  input[type=text], textarea, select { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff; }
+  textarea { resize: vertical; min-height: 200px; line-height: 1.5; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 180px; }
+  .stack > * + * { margin-top: 12px; }
+
+  .btn { border: 1px solid var(--pen); background: var(--pen); color: #fff; padding: 9px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700; }
+  .btn:hover { background: var(--pen-dark); }
+  .btn.ghost { background: #fff; color: var(--pen); }
+  .btn.ghost:hover { background: #EEF3FA; }
+  .btn.quiet { background: transparent; border-color: var(--line); color: var(--ink); font-weight: 400; }
+  .btn.quiet:hover { background: #F2F5F8; }
+  .btn.danger { background: #fff; border-color: var(--bad); color: var(--bad); }
+  .btn.small { padding: 5px 10px; font-size: 14px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .guide-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--line); }
+  .guide-item:first-of-type { border-top: 0; }
+  .guide-item .meta { color: var(--ink-soft); font-size: 14px; }
+  .terms { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .term { background: linear-gradient(transparent 55%, var(--highlight) 55%); padding: 0 2px; font-size: 14px; }
+
+  /* ---------- Index card (the signature element) ---------- */
+  .index-card {
+    position: relative; background: var(--paper); border-radius: 3px;
+    box-shadow: 0 1px 0 #C3CBD4, 0 8px 22px -12px rgba(31,42,55,.45);
+    padding: 20px 26px 22px 66px; min-height: 250px;
+    background-image:
+      linear-gradient(to right, transparent 50px, var(--margin) 50px, var(--margin) 52px, transparent 52px),
+      repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--rule) 31px, var(--rule) 32px);
+    background-position: 0 0, 0 52px;
+    line-height: 32px;
+  }
+  .index-card .card-top { height: 32px; display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-soft); }
+  .index-card .q { font-size: 21px; font-weight: 700; margin: 20px 0 0; line-height: 32px; }
+  .index-card .a { font-size: 17px; margin-top: 32px; white-space: pre-wrap; line-height: 32px; }
+  .index-card .a mark { background: linear-gradient(transparent 50%, var(--highlight) 50%); color: inherit; }
+  .index-card.flip { animation: flip .28s ease; }
+  @keyframes flip { from { transform: rotateX(8deg) translateY(4px); opacity: .6; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .index-card.flip { animation: none; } }
+
+  .grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
+  .grades button { padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: #fff; cursor: pointer; }
+  .grades button small { display: block; color: var(--ink-soft); font-size: 12px; }
+  .grades button:hover { border-color: var(--pen); }
+  .grades button.suggested { border: 2px solid var(--pen); background: #EEF3FA; }
+
+  /* ---------- Answers ---------- */
+  .answer .short { font-size: 18px; margin: 6px 0 12px; }
+  .answer ul { margin: 0 0 12px; padding-left: 20px; }
+  .answer li { margin-bottom: 6px; }
+  .answer .from { font-size: 13px; color: var(--ink-soft); }
+  .conf { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-soft); }
+  .meter { width: 90px; height: 8px; border-radius: 4px; background: #E3E8EE; overflow: hidden; }
+  .meter span { display: block; height: 100%; background: var(--pen); }
+  .memory { border-left: 4px solid var(--highlight); background: #FFFCE6; padding: 12px 16px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-bottom: 14px; }
+  .alt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-top: 1px dashed var(--line); font-size: 15px; }
+  .alt p { margin: 0; flex: 1; }
+
+  /* ---------- Card list / progress ---------- */
+  .card-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .card-row .q { font-weight: 700; }
+  .card-row .a { color: var(--ink-soft); font-size: 15px; white-space: pre-wrap; }
+  .type { font-size: 12px; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--line); color: var(--ink-soft); margin-left: 6px; font-weight: 400; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .stat { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 14px 16px; }
+  .stat b { display: block; font-size: 28px; line-height: 1.1; }
+  .stat span { font-size: 14px; color: var(--ink-soft); }
+  .bar { display: grid; grid-template-columns: 170px 1fr 48px; gap: 10px; align-items: center; margin: 8px 0; font-size: 15px; }
+  .bar .track { height: 10px; background: #E3E8EE; border-radius: 5px; overflow: hidden; }
+  .bar .track span { display: block; height: 100%; background: var(--pen); }
+
+  .empty { text-align: left; padding: 40px 0; max-width: 560px; }
+  .empty h2 { font-size: 30px; margin: 0 0 8px; line-height: 1.2; }
+  .empty p { color: var(--ink-soft); }
+  .muted { color: var(--ink-soft); }
+  #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: var(--radius-sm); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
+  #toast.show { opacity: 1; }
+
+  @media (max-width: 760px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { padding-bottom: 8px; }
+    #classList { flex-direction: row; overflow-x: auto; padding: 0 12px; }
+    .tab, .tab.active { width: auto; margin: 0; border-radius: var(--radius-md) var(--radius-md) 0 0; padding: 8px 12px; }
+    .side-foot { flex-direction: row; flex-wrap: wrap; gap: 12px; }
+    main { padding: 20px 16px 60px; }
+    .index-card { padding-left: 48px; background-image:
+      linear-gradient(to right, transparent 34px, var(--margin) 34px, var(--margin) 36px, transparent 36px),
+      repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--rule) 31px, var(--rule) 32px); }
+    .grades { grid-template-columns: repeat(2, 1fr); }
+    .bar { grid-template-columns: 110px 1fr 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>StudyForge</h1>
+      <p>Notes in, questions out</p>
+    </div>
+    <div class="side-heading">Your classes</div>
+    <nav id="classList" aria-label="Classes"></nav>
+    <div class="new-class" id="newClassArea"></div>
+    <div class="side-foot">
+      <button class="link-btn" id="exportBtn" type="button">Download backup</button>
+      <button class="link-btn" id="importBtn" type="button">Restore from backup</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+      <div class="note" id="storageNote"></div>
+    </div>
+  </aside>
+  <main id="main"></main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =====================================================================
+   StudyForge — a local, in-browser machine-learning study assistant.
+   No server, no API key. Everything runs and is stored in your browser.
+
+   ML pieces:
+   1. TF-IDF vectors + cosine similarity to find the parts of your notes
+      that answer a question (information retrieval).
+   2. Extractive summarization: sentences ranked by term importance.
+   3. Relevance feedback: 👍 / 👎 / "this is better" teaches the model
+      which sentences answer which words (learned per class).
+   4. Question-type weights: flagging bad questions down-weights that
+      generator for future study guides.
+   5. SM-2 spaced repetition: learns which cards you struggle with and
+      schedules them more often.
+   ===================================================================== */
+
+// ---------------------------------------------------------------- storage
+const STORAGE_KEY = 'studyforge-v1';
+let persistent = true;
+try { localStorage.setItem('__sf_test', '1'); localStorage.removeItem('__sf_test'); }
+catch (e) { persistent = false; }
+
+function freshState() { return { classes: [], activeId: null, tab: 'guides' }; }
+function loadState() {
+  if (!persistent) return freshState();
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
+  return freshState();
+}
+function saveState() {
+  if (!persistent) return;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) { toast('Storage is full. Download a backup, then delete old guides.'); }
+}
+let state = loadState();
+
+const COLORS = ['#F2A541', '#5DA9E9', '#7BC47F', '#E86A92', '#A68BD8', '#4FC1B9', '#E5D352', '#F07F5A'];
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
+const DAY = 86400000;
+
+function newClass(name) {
+  return {
+    id: uid(), name, color: COLORS[state.classes.length % COLORS.length], created: Date.now(),
+    guides: [], cards: [], qa: [],
+    learn: { sentWeight: {}, termBoost: {}, typeWeight: { definition: 1, cloze: 1, list: 1, concept: 1, custom: 1 } },
+    stats: { reviews: 0, correct: 0 }
+  };
+}
+const activeClass = () => state.classes.find(c => c.id === state.activeId) || null;
+
+// ---------------------------------------------------------------- NLP basics
+const STOP = new Set(("a about above after again against all am an and any are as at be because been before being below between both but by can could did do does doing down during each few for from further had has have having he her here hers herself him himself his how i if in into is it its itself just me more most my myself no nor not now of off on once only or other our ours ourselves out over own same she should so some such than that the their theirs them themselves then there these they this those through to too under until up very was we were what when where which while who whom why will with would you your yours yourself yourselves also may might must shall use used using many much well however thus therefore etc eg ie vs called known include includes including like example").split(' '));
+
+function stem(w) {
+  if (w.length > 5 && w.endsWith('ies')) return w.slice(0, -3) + 'y';
+  if (w.length > 5 && w.endsWith('ing')) return w.slice(0, -3);
+  if (w.length > 4 && w.endsWith('ed')) return w.slice(0, -2);
+  if (w.length > 4 && /(s|x|z|ch|sh)es$/.test(w)) return w.slice(0, -2);
+  if (w.length > 3 && w.endsWith('s') && !/(ss|us|is)$/.test(w)) return w.slice(0, -1);
+  return w;
+}
+function words(text) { return text.match(/[A-Za-z0-9][A-Za-z0-9'-]*/g) || []; }
+function tokenize(text) {
+  return words(text.toLowerCase())
+    .map(w => w.replace(/'s$/, '').replace(/^['-]+|['-]+$/g, ''))
+    .filter(w => w.length > 1 && !STOP.has(w))
+    .map(stem);
+}
+function hash(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+function splitSentences(t) {
+  return t.replace(/\s+/g, ' ').split(/(?<=[.!?])\s+(?=[A-Z0-9"'(\[])/).map(s => s.trim()).filter(Boolean);
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function normQ(q) { return q.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim(); }
+
+// Turn a pasted study guide into sentences + heading/bullet blocks
+const BULLET = /^([-*•●▪◦‣>]|\d+[.)]|[a-zA-Z][.)])\s+/;
+function parseGuide(text, guideId) {
+  const sentences = [], blocks = [];
+  let current = { heading: null, items: [] };
+  text.replace(/\r/g, '').split('\n').forEach(raw => {
+    const line = raw.trim();
+    if (!line) return;
+    const isBullet = BULLET.test(line);
+    const clean = line.replace(BULLET, '').replace(/^#{1,6}\s*/, '').trim();
+    if (!clean) return;
+    const wc = clean.split(/\s+/).length;
+    const isHeading = !isBullet && (
+      /^#{1,6}\s/.test(line) || /:$/.test(clean) ||
+      (clean.length < 60 && wc <= 8 && !/[.!?,;]$/.test(clean) && /^[A-Z0-9]/.test(clean) && !/:\s/.test(clean))
+    );
+    if (isHeading) {
+      if (current.heading || current.items.length) blocks.push(current);
+      current = { heading: clean.replace(/:$/, '').trim(), items: [] };
+      return;
+    }
+    if (isBullet) current.items.push(clean);
+    splitSentences(clean).forEach(s => {
+      if (s.split(/\s+/).length >= 3) sentences.push({ text: s, heading: current.heading, guideId });
+    });
+  });
+  blocks.push(current);
+  return { sentences, blocks: blocks.filter(b => b.heading && b.items.length >= 2 && b.items.length <= 12).map(b => ({ ...b, guideId })) };
+}
+
+// ---------------------------------------------------------------- TF-IDF index (per class, cached)
+const indexCache = {};
+function vectorize(tokens, idf) {
+  const tf = {}; tokens.forEach(t => tf[t] = (tf[t] || 0) + 1);
+  const v = {}; let norm = 0;
+  for (const t in tf) { const w = (1 + Math.log(tf[t])) * idf(t); v[t] = w; norm += w * w; }
+  norm = Math.sqrt(norm) || 1;
+  for (const t in v) v[t] /= norm;
+  return v;
+}
+function cosine(a, b) {
+  let s = 0;
+  for (const t in a) if (b[t] !== undefined) s += a[t] * b[t];
+  return s;
+}
+function getIndex(cls) {
+  const sig = cls.guides.map(g => g.id + g.text.length).join('|');
+  if (indexCache[cls.id] && indexCache[cls.id].sig === sig) return indexCache[cls.id];
+
+  const sentences = [], blocks = [];
+  cls.guides.forEach(g => {
+    const p = parseGuide(g.text, g.id);
+    sentences.push(...p.sentences); blocks.push(...p.blocks);
+  });
+  const df = {}, surface = {};
+  sentences.forEach((s, i) => {
+    s.idx = i; s.id = hash(s.text); s.tokens = tokenize(s.text);
+    new Set(s.tokens).forEach(t => df[t] = (df[t] || 0) + 1);
+    words(s.text).forEach(w => {
+      const lw = w.toLowerCase(); if (STOP.has(lw)) return;
+      const st = stem(lw.replace(/'s$/, ''));
+      (surface[st] = surface[st] || {})[lw] = (surface[st][lw] || 0) + 1;
+    });
+  });
+  const N = sentences.length || 1;
+  const idf = t => Math.log((N + 1) / ((df[t] || 0) + 1)) + 1;
+  // term importance: appears repeatedly, but isn't everywhere
+  const termScore = {};
+  for (const t in df) termScore[t] = df[t] > 1 ? Math.log(1 + df[t]) * idf(t) : 0.3 * idf(t);
+  let maxImp = 0;
+  sentences.forEach(s => {
+    s.vec = vectorize(s.tokens, idf);
+    const uniq = [...new Set(s.tokens)];
+    s.importance = uniq.reduce((a, t) => a + termScore[t], 0) / Math.sqrt(uniq.length + 2);
+    maxImp = Math.max(maxImp, s.importance);
+  });
+  sentences.forEach(s => s.importance = maxImp ? s.importance / maxImp : 0);
+  const surfaceOf = t => {
+    const m = surface[t]; if (!m) return t;
+    return Object.entries(m).sort((a, b) => b[1] - a[1])[0][0];
+  };
+  const keyTerms = Object.keys(df)
+    .filter(t => df[t] >= 2 && t.length > 3 && !/^\d+$/.test(t))
+    .sort((a, b) => termScore[b] - termScore[a]);
+
+  const idx = { sig, sentences, blocks, df, N, idf, termScore, surfaceOf, keyTerms };
+  indexCache[cls.id] = idx;
+  return idx;
+}
+
+// ---------------------------------------------------------------- Question generation
+const PRONOUN_START = /^(it|this|that|these|those|they|there|he|she|we|you|i|which|here|such|each|one|some|most|many|all|other|another|both|its|their)\b/i;
+
+function lowerArticle(s) { return s.replace(/^(The|A|An)\s/, m => m.toLowerCase()); }
+
+function genDefinition(s) {
+  const t = s.text.replace(/[.!]$/, '');
+  let m = t.match(/^([A-Z0-9][^,;:()]{1,60}?)\s+(is defined as|refers to|means|is|are|was|were)\s+(.{8,})$/);
+  if (m && !PRONOUN_START.test(m[1]) && m[1].split(/\s+/).length <= 7) {
+    const subj = lowerArticle(m[1].trim()), verb = m[2];
+    let q;
+    if (verb === 'refers to') q = `What does ${subj} refer to?`;
+    else if (verb === 'means') q = `What does ${subj} mean?`;
+    else if (verb === 'is defined as') q = `How is ${subj} defined?`;
+    else q = `What ${verb} ${subj}?`;
+    return { q, a: s.text, type: 'definition', term: m[1] };
+  }
+  m = t.match(/^([A-Z0-9][\w\s()'/&-]{1,50}?)\s*(?::|\s[–—-])\s+(.{8,})$/);
+  if (m && !PRONOUN_START.test(m[1])) {
+    const def = m[2].charAt(0).toUpperCase() + m[2].slice(1);
+    return { q: `What is ${lowerArticle(m[1].trim())}?`, a: def.endsWith('.') ? def : def + '.', type: 'definition', term: m[1] };
+  }
+  return null;
+}
+
+function genCloze(s, idx) {
+  let best = null;
+  words(s.text).forEach((w, i) => {
+    const lw = w.toLowerCase();
+    if (STOP.has(lw) || (w.length < 4 && !/^\d{3,}$/.test(w))) return;
+    const st = stem(lw.replace(/'s$/, ''));
+    const share = (idx.df[st] || 0) / idx.N;
+    let score = idx.idf(st) * (idx.df[st] > 1 ? 1.3 : 1) * Math.log(2 + w.length) * (share > 0.35 ? 0.3 : 1);
+    if (/^\d{3,}$/.test(w)) score *= 1.2;          // dates and figures are good blanks
+    if (i === 0) score *= 0.6;                      // avoid blanking the first word
+    if (!best || score > best.score) best = { w, score };
+  });
+  if (!best || best.score <= 0) return null;
+  const re = new RegExp(`\\b${best.w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+  const blanked = s.text.replace(re, '_____');
+  if (blanked === s.text) return null;
+  return { q: `Fill in the blank: ${blanked}`, a: `${best.w}\n\n${s.text.replace(re, `[[${best.w}]]`)}`, type: 'cloze' };
+}
+
+function genList(b) {
+  const h = b.heading;
+  const plural = /\b(types|kinds|steps|stages|phases|causes|effects|functions|parts|characteristics|examples|features|principles|factors|components|properties|laws|rules|methods|advantages|disadvantages|reasons)\b/i.test(h);
+  const q = plural ? `What are the ${b.items.length} ${h.toLowerCase()}?` : `List the ${b.items.length} key points under “${h}”.`;
+  return { q, a: b.items.map(x => '• ' + x).join('\n'), type: 'list' };
+}
+
+function genConcepts(idx, guideId, limit) {
+  const out = [];
+  const picked = [];
+  idx.keyTerms.slice(0, 30).forEach(t => {
+    if (out.length >= limit) return;
+    if (idx.df[t] / idx.N > 0.4) return;                                   // too generic
+    if (picked.some(p => p.startsWith(t.slice(0, 4)) || t.startsWith(p.slice(0, 4)))) return; // near-duplicate term
+
+    const hits = idx.sentences.filter(s => s.guideId === guideId && s.tokens.includes(t)).sort((a, b) => b.importance - a.importance);
+    if (hits.length < 2) return;
+    picked.push(t);
+    const term = idx.surfaceOf(t);
+    const top = hits.slice(0, 3).sort((a, b) => a.idx - b.idx);
+    out.push({ q: `Explain ${term} in your own words.`, a: top.map(s => '• ' + s.text).join('\n'), type: 'concept', score: idx.termScore[t] / 4, srcIds: top.map(s => s.id) });
+  });
+  return out;
+}
+
+function generateCards(cls, guideId) {
+  const idx = getIndex(cls);
+  const tw = cls.learn.typeWeight;
+  const sents = idx.sentences.filter(s => s.guideId === guideId);
+  const cands = [];
+  const used = new Set();
+  sents.forEach(s => {
+    const sw = cls.learn.sentWeight[s.id] ?? 1;
+    const d = genDefinition(s);
+    if (d) { cands.push({ ...d, score: (0.6 + s.importance) * tw.definition * sw, srcIds: [s.id] }); used.add(s.id); }
+  });
+  sents.forEach(s => {
+    if (used.has(s.id) || s.tokens.length < 4) return;
+    const c = genCloze(s, idx);
+    if (c) cands.push({ ...c, score: s.importance * tw.cloze * (cls.learn.sentWeight[s.id] ?? 1), srcIds: [s.id] });
+  });
+  idx.blocks.filter(b => b.guideId === guideId).forEach(b => cands.push({ ...genList(b), score: 0.9 * tw.list, srcIds: [] }));
+  genConcepts(idx, guideId, 6).forEach(c => cands.push({ ...c, score: c.score * tw.concept }));
+
+  const limit = Math.max(8, Math.min(80, Math.round(sents.length * 0.6) + 4));
+  const existing = new Set(cls.cards.map(c => normQ(c.q)));
+  const chosen = [];
+  cands.sort((a, b) => b.score - a.score).forEach(c => {
+    if (chosen.length >= limit) return;
+    const k = normQ(c.q); if (existing.has(k)) return;
+    existing.add(k); chosen.push(makeCard(c.q, c.a, c.type, guideId, c.srcIds));
+  });
+  return chosen;
+}
+
+function makeCard(q, a, type, guideId, srcIds = []) {
+  return { id: uid(), q, a, type, guideId, srcIds, ease: 2.5, interval: 0, reps: 0, lapses: 0, due: Date.now(), hidden: false, created: Date.now() };
+}
+
+// ---------------------------------------------------------------- Answering questions
+let lastAnswer = null;
+
+function answerQuestion(cls, query) {
+  const idx = getIndex(cls);
+  const qTokens = tokenize(query);
+  if (!idx.sentences.length) return { error: 'Add a study guide to this class first.' };
+  if (!qTokens.length) return { error: 'Try a question with a few specific words from your notes.' };
+  const qv = vectorize(qTokens, idx.idf);
+  const L = cls.learn;
+  const wantsDef = /^(what|define|who|meaning)/i.test(query.trim());
+
+  // 1) Saved answers you approved or corrected (memory)
+  let memory = null;
+  cls.qa.filter(x => x.vote > 0).forEach(x => {
+    const sim = cosine(qv, vectorize(tokenize(x.q), idx.idf));
+    if (sim > 0.72 && (!memory || sim > memory.sim)) memory = { ...x, sim };
+  });
+
+  // 2) Score each sentence: similarity x learned weight + learned term associations
+  const scored = idx.sentences.map(s => {
+    const raw = cosine(qv, s.vec);
+    let boost = 0;
+    qTokens.forEach(t => { const m = L.termBoost[t]; if (m && m[s.id]) boost += m[s.id]; });
+    const heading = s.heading ? cosine(qv, vectorize(tokenize(s.heading), idx.idf)) * 0.15 : 0;
+    const defBonus = wantsDef && /\b(is|are|refers to|means|defined as)\b/.test(s.text.slice(0, 80)) &&
+      tokenize(s.text.slice(0, 60)).some(t => qTokens.includes(t)) ? 0.1 : 0;
+    const score = (raw + heading + defBonus) * (L.sentWeight[s.id] ?? 1) + 0.15 * Math.tanh(boost / 2);
+    return { s, raw, score };
+  }).filter(x => x.score > 0.03).sort((a, b) => b.score - a.score);
+
+  if (!scored.length && !memory) return { error: 'Nothing in your notes for this class matches that question. Try other words, or add more notes.' };
+  const top = scored[0];
+  const selected = top ? scored.filter(x => x.score >= top.score * 0.55).slice(0, 4) : [];
+  const alternatives = scored.slice(selected.length, selected.length + 4);
+  const confidence = top ? Math.round((1 - Math.exp(-3 * Math.max(0, top.score))) * 100) : 0;
+  return { query, qTokens, selected, alternatives, confidence, memory, idx };
+}
+
+function learnFrom(cls, qTokens, sentIds, amount) {
+  const L = cls.learn;
+  sentIds.forEach(id => {
+    L.sentWeight[id] = Math.min(2, Math.max(0.3, (L.sentWeight[id] ?? 1) + 0.08 * Math.sign(amount)));
+    qTokens.forEach(t => {
+      L.termBoost[t] = L.termBoost[t] || {};
+      L.termBoost[t][id] = Math.max(-6, Math.min(6, (L.termBoost[t][id] || 0) + amount));
+    });
+  });
+}
+
+// ---------------------------------------------------------------- Spaced repetition (SM-2)
+function review(card, grade) { // 0 again, 3 hard, 4 good, 5 easy
+  if (grade < 3) { card.reps = 0; card.lapses++; card.interval = 0; card.due = Date.now() + 60 * 1000; }
+  else {
+    card.reps++;
+    if (grade === 3) card.interval = Math.max(1, Math.round(card.interval * 1.2));
+    else if (card.reps === 1) card.interval = grade === 5 ? 3 : 1;
+    else if (card.reps === 2) card.interval = grade === 5 ? 6 : 3;
+    else card.interval = Math.round(card.interval * card.ease * (grade === 5 ? 1.3 : 1));
+    card.due = Date.now() + card.interval * DAY;
+  }
+  card.ease = Math.max(1.3, card.ease + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02)));
+}
+const dueCards = cls => cls.cards.filter(c => !c.hidden && c.due <= Date.now()).sort((a, b) => a.due - b.due);
+
+// ---------------------------------------------------------------- UI helpers
+const $ = sel => document.querySelector(sel);
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2400); }
+function fmtAnswer(a) { return esc(a).replace(/\[\[(.+?)\]\]/g, '<mark>$1</mark>'); }
+function commit() { saveState(); render(); }
+
+// ---------------------------------------------------------------- Sidebar
+let addingClass = false;
+function renderSidebar() {
+  $('#classList').innerHTML = state.classes.map(c => `
+    <button class="tab ${c.id === state.activeId ? 'active' : ''}" data-class="${c.id}" aria-current="${c.id === state.activeId}">
+      <span class="swatch" style="background:${c.color}"></span>
+      <span class="name">${esc(c.name)}</span>
+      <span class="count">${c.cards.filter(x => !x.hidden).length}</span>
+    </button>`).join('');
+  $('#newClassArea').innerHTML = addingClass
+    ? `<form id="newClassForm"><input id="newClassName" type="text" placeholder="e.g. Biology 101" aria-label="Class name" maxlength="60"><button class="btn small" type="submit">Add</button></form>`
+    : `<button class="link-btn" id="showNewClass" type="button">+ Add a class</button>`;
+  if (addingClass) setTimeout(() => $('#newClassName')?.focus(), 0);
+  $('#storageNote').textContent = persistent
+    ? 'Saved in this browser. Download a backup to move to another device.'
+    : 'This preview can’t save between visits. Open it from GitHub Pages to keep your data.';
+}
+
+// ---------------------------------------------------------------- Main views
+let practice = { card: null, revealed: false, typed: '', suggestion: null, anyway: false };
+let confirmDelete = null;
+let renaming = false;
+let cardFilter = '';
+
+function render() {
+  renderSidebar();
+  const cls = activeClass();
+  const main = $('#main');
+  if (!cls) {
+    main.innerHTML = `
+      <div class="empty">
+        <h2>Make a folder for each class you’re taking.</h2>
+        <p>Then paste in a study guide. StudyForge will turn it into practice questions, answer your questions from your own notes, and learn from your feedback as you study.</p>
+        <button class="btn" id="emptyNewClass" type="button">Add your first class</button>
+      </div>`;
+    return;
+  }
+  const due = dueCards(cls).length;
+  const tabs = [['guides', 'Study guides'], ['ask', 'Ask a question'], ['practice', 'Practice'], ['cards', 'All questions'], ['progress', 'Progress']];
+  main.innerHTML = `
+    <div class="class-head">
+      ${renaming
+        ? `<form id="renameForm" class="row"><input type="text" id="renameInput" value="${esc(cls.name)}" aria-label="Class name" maxlength="60"><button class="btn small">Save name</button></form>`
+        : `<h2>${esc(cls.name)}</h2>`}
+      <div class="actions">
+        ${renaming ? '' : `<button class="btn quiet small" id="renameBtn" type="button">Rename</button>`}
+        <button class="btn danger small" id="deleteClassBtn" type="button">${confirmDelete === cls.id ? 'Click again to delete everything' : 'Delete class'}</button>
+      </div>
+    </div>
+    <div class="nav" role="tablist">
+      ${tabs.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${state.tab === k}">${l}${k === 'practice' && due ? `<span class="badge">${due}</span>` : ''}</button>`).join('')}
+    </div>
+    <div id="view"></div>`;
+  const view = $('#view');
+  ({ guides: viewGuides, ask: viewAsk, practice: viewPractice, cards: viewCards, progress: viewProgress }[state.tab] || viewGuides)(cls, view);
+  if (renaming) setTimeout(() => $('#renameInput')?.select(), 0);
+}
+
+function viewGuides(cls, view) {
+  const idx = getIndex(cls);
+  view.innerHTML = `
+    <div class="panel stack">
+      <div>
+        <h3>Paste a study guide</h3>
+        <p class="sub">Notes, outlines, and bullet lists all work. Lines like “Term: definition” and “X is Y” make the best questions.</p>
+      </div>
+      <div>
+        <label class="field" for="guideTitle">Title</label>
+        <input type="text" id="guideTitle" placeholder="e.g. Unit 3 — Cell respiration" maxlength="80">
+      </div>
+      <div>
+        <label class="field" for="guideText">Study guide text</label>
+        <textarea id="guideText" placeholder="Paste your study guide here…"></textarea>
+      </div>
+      <div class="row"><button class="btn" id="addGuideBtn" type="button">Add guide and make questions</button><span class="muted" id="guideCount"></span></div>
+    </div>
+    <div class="panel">
+      <h3>Guides in ${esc(cls.name)}</h3>
+      ${cls.guides.length ? '' : '<p class="sub">No guides yet. Paste one above to get started.</p>'}
+      ${cls.guides.map(g => {
+        const n = cls.cards.filter(c => c.guideId === g.id && !c.hidden).length;
+        const terms = idx.keyTerms.filter(t => idx.sentences.some(s => s.guideId === g.id && s.tokens.includes(t))).slice(0, 10);
+        return `<div class="guide-item">
+          <div class="grow">
+            <b>${esc(g.title)}</b>
+            <div class="meta">${g.text.split(/\s+/).length} words, ${n} questions, added ${new Date(g.added).toLocaleDateString()}</div>
+            ${terms.length ? `<div class="terms">${terms.map(t => `<span class="term">${esc(idx.surfaceOf(t))}</span>`).join('')}</div>` : ''}
+          </div>
+          <button class="btn quiet small" data-regen="${g.id}" type="button">Make more questions</button>
+          <button class="btn danger small" data-delguide="${g.id}" type="button">${confirmDelete === g.id ? 'Confirm delete' : 'Delete'}</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  const ta = $('#guideText');
+  ta.addEventListener('input', () => { $('#guideCount').textContent = ta.value.trim() ? `${ta.value.trim().split(/\s+/).length} words` : ''; });
+}
+
+function viewAsk(cls, view) {
+  view.innerHTML = `
+    <div class="panel">
+      <h3>Ask about ${esc(cls.name)}</h3>
+      <p class="sub">Answers come only from the guides in this class. Rate them so it gets better at finding the right part of your notes.</p>
+      <div class="row">
+        <input type="text" id="askInput" class="grow" placeholder="e.g. What does the mitochondria do?" value="${lastAnswer && lastAnswer.clsId === cls.id ? esc(lastAnswer.query) : ''}">
+        <button class="btn" id="askBtn" type="button">Get answer</button>
+      </div>
+    </div>
+    <div id="answerArea"></div>`;
+  if (lastAnswer && lastAnswer.clsId === cls.id) renderAnswer(cls);
+  setTimeout(() => $('#askInput')?.focus(), 0);
+}
+
+function renderAnswer(cls) {
+  const A = lastAnswer, area = $('#answerArea');
+  if (!area) return;
+  if (A.error) { area.innerHTML = `<div class="panel"><p class="sub" style="margin:0">${esc(A.error)}</p></div>`; return; }
+  const guideName = id => cls.guides.find(g => g.id === id)?.title || 'a guide';
+  const [first, ...rest] = A.selected;
+  const conf = A.confidence, label = conf >= 70 ? 'Strong match' : conf >= 45 ? 'Partial match' : 'Weak match';
+  area.innerHTML = `
+    ${A.memory ? `<div class="memory"><b>Your saved answer to a similar question</b><div class="muted" style="font-size:14px">“${esc(A.memory.q)}”</div><p style="margin:6px 0 0;white-space:pre-wrap">${esc(A.memory.a)}</p></div>` : ''}
+    ${first ? `<div class="panel answer">
+      <div class="row" style="justify-content:space-between">
+        <h3>Summary from your notes</h3>
+        <span class="conf">${label}<span class="meter"><span style="width:${conf}%"></span></span>${conf}%</span>
+      </div>
+      <p class="short">${esc(first.s.text)}</p>
+      ${rest.length ? `<ul>${rest.sort((a, b) => a.s.idx - b.s.idx).map(x => `<li>${esc(x.s.text)}</li>`).join('')}</ul>` : ''}
+      <p class="from">From: ${[...new Set(A.selected.map(x => guideName(x.s.guideId)))].map(esc).join(', ')}</p>
+      ${A.voted ? `<p class="muted">Thanks — that feedback is saved for ${esc(cls.name)}.</p>` : `
+      <div class="row">
+        <button class="btn ghost small" id="voteUp" type="button">👍 This answered it</button>
+        <button class="btn quiet small" id="voteDown" type="button">👎 Not right</button>
+        <button class="btn quiet small" id="saveCard" type="button">Save as practice question</button>
+        <button class="btn quiet small" id="showCorrect" type="button">Write the correct answer</button>
+      </div>`}
+      <div id="correctArea"></div>
+    </div>` : ''}
+    ${A.alternatives.length && (A.showAlts || conf < 45) ? `<div class="panel">
+      <h3>Other parts of your notes that might fit</h3>
+      <p class="sub">Pick the one that answers the question. It will rank higher next time.</p>
+      ${A.alternatives.map((x, i) => `<div class="alt"><p>${esc(x.s.text)}</p><button class="btn ghost small" data-better="${i}" type="button">This is better</button></div>`).join('')}
+    </div>` : ''}`;
+}
+
+function viewPractice(cls, view) {
+  const due = dueCards(cls);
+  const pool = practice.anyway ? cls.cards.filter(c => !c.hidden).sort((a, b) => (a.ease - b.ease) || (b.lapses - a.lapses)) : due;
+  if (!practice.card || !cls.cards.includes(practice.card) || practice.card.hidden) {
+    practice = { ...practice, card: pool[0] || null, revealed: false, typed: '', suggestion: null };
+  }
+  const card = practice.card;
+  if (!card) {
+    const total = cls.cards.filter(c => !c.hidden).length;
+    const next = cls.cards.filter(c => !c.hidden).sort((a, b) => a.due - b.due)[0];
+    view.innerHTML = `<div class="panel">
+      <h3>${total ? 'You’re caught up.' : 'No questions yet.'}</h3>
+      <p class="sub">${total ? `Next question is due ${next ? new Date(next.due).toLocaleString() : 'later'}. Cards you miss come back sooner; ones you know come back later.` : 'Add a study guide and questions will show up here.'}</p>
+      ${total ? `<button class="btn ghost" id="practiceAnyway" type="button">Practice my weakest questions anyway</button>` : `<button class="btn" data-tab="guides" type="button">Add a study guide</button>`}
+    </div>`;
+    return;
+  }
+  const guide = cls.guides.find(g => g.id === card.guideId);
+  view.innerHTML = `
+    <p class="muted" style="margin-top:0">${practice.anyway ? 'Extra practice, weakest first' : `${due.length} due now`}</p>
+    <div class="index-card ${practice.revealed ? 'flip' : ''}" aria-live="polite">
+      <div class="card-top"><span>${esc(guide?.title || 'Your question')}</span><span>${card.type}</span></div>
+      <p class="q">${esc(card.q)}</p>
+      ${practice.revealed ? `<div class="a">${fmtAnswer(card.a)}</div>` : ''}
+    </div>
+    ${practice.revealed ? `
+      ${practice.suggestion !== null ? `<p class="muted">Your answer matched about ${practice.suggestion.pct}% of the key words. Suggested grade is outlined.</p>` : ''}
+      <div class="grades">
+        ${[[0, 'Again', 'Didn’t know it'], [3, 'Hard', 'Barely'], [4, 'Good', 'Got it'], [5, 'Easy', 'Too easy']].map(([g, l, s]) =>
+          `<button data-grade="${g}" type="button" class="${practice.suggestion?.grade === g ? 'suggested' : ''}">${l}<small>${s}</small></button>`).join('')}
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn quiet small" id="flagCard" type="button">Remove — this is a bad question</button>
+      </div>` : `
+      <div class="stack" style="margin-top:16px">
+        <label class="field" for="typedAnswer">Type your answer (optional — it helps pick your grade)</label>
+        <textarea id="typedAnswer" style="min-height:80px">${esc(practice.typed)}</textarea>
+        <div class="row"><button class="btn" id="revealBtn" type="button">Show answer</button></div>
+      </div>`}`;
+}
+
+function viewCards(cls, view) {
+  const list = cls.cards.filter(c => !c.hidden && (!cardFilter || (c.q + ' ' + c.a).toLowerCase().includes(cardFilter.toLowerCase())));
+  view.innerHTML = `
+    <div class="panel">
+      <h3>Add your own question</h3>
+      <div class="stack" style="margin-top:10px">
+        <input type="text" id="customQ" placeholder="Question">
+        <textarea id="customA" placeholder="Answer" style="min-height:80px"></textarea>
+        <div class="row"><button class="btn" id="addCustom" type="button">Add question</button></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between">
+        <h3>${list.length} questions</h3>
+        <input type="text" id="cardSearch" placeholder="Search questions" value="${esc(cardFilter)}" style="max-width:260px">
+      </div>
+      ${list.map(c => `<div class="card-row">
+        <div><div class="q">${esc(c.q)}<span class="type">${c.type}</span></div><div class="a">${fmtAnswer(c.a)}</div></div>
+        <div><button class="btn quiet small" data-delcard="${c.id}" type="button">Delete</button></div>
+      </div>`).join('') || '<p class="sub">No questions match.</p>'}
+    </div>`;
+}
+
+function viewProgress(cls, view) {
+  const cards = cls.cards.filter(c => !c.hidden);
+  const mastered = cards.filter(c => c.interval >= 21).length;
+  const learning = cards.filter(c => c.reps > 0 && c.interval < 21).length;
+  const acc = cls.stats.reviews ? Math.round(cls.stats.correct / cls.stats.reviews * 100) : 0;
+  const tw = cls.learn.typeWeight;
+  const weak = cards.filter(c => c.lapses > 0).sort((a, b) => b.lapses - a.lapses).slice(0, 5);
+  const assoc = Object.values(cls.learn.termBoost).reduce((a, m) => a + Object.keys(m).length, 0);
+  view.innerHTML = `
+    <div class="stats">
+      <div class="stat"><b>${cards.length}</b><span>questions</span></div>
+      <div class="stat"><b>${dueCards(cls).length}</b><span>due now</span></div>
+      <div class="stat"><b>${learning}</b><span>learning</span></div>
+      <div class="stat"><b>${mastered}</b><span>mastered (3+ weeks)</span></div>
+      <div class="stat"><b>${acc}%</b><span>correct over ${cls.stats.reviews} reviews</span></div>
+    </div>
+    <div class="panel" style="margin-top:18px">
+      <h3>What it has learned from you</h3>
+      <p class="sub">${Object.keys(cls.learn.sentWeight).length} note sentences re-ranked, ${assoc} word-to-answer links, ${cls.qa.filter(q => q.vote > 0).length} saved answers.</p>
+      <p class="muted" style="margin:0 0 4px">How much it favors each question type (drops when you remove bad questions):</p>
+      ${Object.entries(tw).filter(([k]) => k !== 'custom').map(([k, v]) => `<div class="bar"><span>${k}</span><span class="track"><span style="width:${Math.min(100, v / 1.5 * 100)}%"></span></span><span>${v.toFixed(2)}</span></div>`).join('')}
+    </div>
+    <div class="panel">
+      <h3>Questions you miss most</h3>
+      ${weak.length ? weak.map(c => `<div class="card-row"><div><div class="q">${esc(c.q)}</div><div class="a">Missed ${c.lapses} time${c.lapses > 1 ? 's' : ''}</div></div><div></div></div>`).join('') : '<p class="sub">None yet. Keep practicing.</p>'}
+    </div>`;
+}
+
+// ---------------------------------------------------------------- Events
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  const cls = activeClass();
+
+  if (t.dataset.class) { state.activeId = t.dataset.class; confirmDelete = null; renaming = false; practice = { card: null, revealed: false, typed: '', suggestion: null, anyway: false }; return commit(); }
+  if (t.id === 'showNewClass' || t.id === 'emptyNewClass') { addingClass = true; return render(); }
+  if (t.dataset.tab) { state.tab = t.dataset.tab; confirmDelete = null; return commit(); }
+  if (t.id === 'exportBtn') return exportData();
+  if (t.id === 'importBtn') return $('#importFile').click();
+  if (!cls) return;
+
+  if (t.id === 'renameBtn') { renaming = true; return render(); }
+  if (t.id === 'deleteClassBtn') {
+    if (confirmDelete !== cls.id) { confirmDelete = cls.id; return render(); }
+    state.classes = state.classes.filter(c => c.id !== cls.id);
+    state.activeId = state.classes[0]?.id || null; confirmDelete = null;
+    toast('Class deleted'); return commit();
+  }
+
+  // Guides
+  if (t.id === 'addGuideBtn') {
+    const text = $('#guideText').value.trim();
+    if (text.split(/\s+/).length < 20) return toast('Paste at least a few sentences of notes.');
+    const title = $('#guideTitle').value.trim() || `Guide ${cls.guides.length + 1}`;
+    const g = { id: uid(), title, text, added: Date.now() };
+    cls.guides.push(g);
+    const cards = generateCards(cls, g.id);
+    cls.cards.push(...cards);
+    toast(`Added “${title}” with ${cards.length} questions`);
+    return commit();
+  }
+  if (t.dataset.regen) {
+    const cards = generateCards(cls, t.dataset.regen);
+    cls.cards.push(...cards);
+    toast(cards.length ? `Made ${cards.length} more questions` : 'No new questions left in this guide');
+    return commit();
+  }
+  if (t.dataset.delguide) {
+    const id = t.dataset.delguide;
+    if (confirmDelete !== id) { confirmDelete = id; return render(); }
+    cls.guides = cls.guides.filter(g => g.id !== id);
+    cls.cards = cls.cards.filter(c => c.guideId !== id);
+    confirmDelete = null; toast('Guide and its questions deleted'); return commit();
+  }
+
+  // Ask
+  if (t.id === 'askBtn') return doAsk(cls);
+  if (t.id === 'voteUp' && lastAnswer) {
+    learnFrom(cls, lastAnswer.qTokens, lastAnswer.selected.map(x => x.s.id), 1);
+    cls.qa.push({ id: uid(), q: lastAnswer.query, a: lastAnswer.selected.map(x => x.s.text).join(' '), vote: 1, time: Date.now() });
+    lastAnswer.voted = true; saveState(); return renderAnswer(cls);
+  }
+  if (t.id === 'voteDown' && lastAnswer) {
+    learnFrom(cls, lastAnswer.qTokens, lastAnswer.selected.map(x => x.s.id), -1);
+    lastAnswer.showAlts = true; saveState(); renderAnswer(cls);
+    return toast(lastAnswer.alternatives.length ? 'Pick a better match below, or write the correct answer.' : 'Write the correct answer so it remembers.');
+  }
+  if (t.dataset.better !== undefined && lastAnswer) {
+    const pick = lastAnswer.alternatives[+t.dataset.better];
+    learnFrom(cls, lastAnswer.qTokens, [pick.s.id], 2);
+    if (lastAnswer.selected[0]) learnFrom(cls, lastAnswer.qTokens, [lastAnswer.selected[0].s.id], -0.5);
+    saveState(); toast('Got it — that will rank higher next time');
+    return doAsk(cls, lastAnswer.query);
+  }
+  if (t.id === 'saveCard' && lastAnswer) {
+    cls.cards.push(makeCard(lastAnswer.query, lastAnswer.selected.map(x => x.s.text).join('\n'), 'custom', null, lastAnswer.selected.map(x => x.s.id)));
+    toast('Saved to your practice questions'); saveState(); return renderSidebar();
+  }
+  if (t.id === 'showCorrect') {
+    $('#correctArea').innerHTML = `<div class="stack" style="margin-top:14px">
+      <label class="field" for="correctText">Correct answer</label>
+      <textarea id="correctText" style="min-height:90px"></textarea>
+      <div class="row"><button class="btn small" id="saveCorrect" type="button">Save answer</button></div></div>`;
+    return $('#correctText').focus();
+  }
+  if (t.id === 'saveCorrect' && lastAnswer) {
+    const a = $('#correctText').value.trim(); if (!a) return;
+    cls.qa.push({ id: uid(), q: lastAnswer.query, a, vote: 2, time: Date.now(), custom: true });
+    cls.cards.push(makeCard(lastAnswer.query, a, 'custom', null));
+    // teach retrieval: sentences that share words with your answer become linked to this question
+    const idx = getIndex(cls), av = vectorize(tokenize(a), idx.idf);
+    const matches = idx.sentences.map(s => ({ s, sim: cosine(av, s.vec) })).filter(x => x.sim > 0.25).sort((x, y) => y.sim - x.sim).slice(0, 2);
+    learnFrom(cls, lastAnswer.qTokens, matches.map(x => x.s.id), 1.5);
+    lastAnswer.voted = true; toast('Saved — it will show this answer for similar questions');
+    saveState(); renderSidebar(); return renderAnswer(cls);
+  }
+
+  // Practice
+  if (t.id === 'practiceAnyway') { practice.anyway = true; practice.card = null; return render(); }
+  if (t.id === 'revealBtn') {
+    const typed = $('#typedAnswer').value.trim();
+    practice.typed = typed; practice.revealed = true; practice.suggestion = null;
+    if (typed) {
+      const idx = getIndex(cls);
+      const ansTokens = new Set(tokenize(practice.card.a.replace(/\[\[|\]\]/g, '')));
+      const mine = new Set(tokenize(typed));
+      const hit = [...ansTokens].filter(x => mine.has(x)).length;
+      const pct = ansTokens.size ? Math.round(hit / Math.min(ansTokens.size, 8) * 100) : 0;
+      const p = Math.min(100, pct);
+      practice.suggestion = { pct: p, grade: p >= 85 ? 5 : p >= 55 ? 4 : p >= 30 ? 3 : 0 };
+      void idx;
+    }
+    return render();
+  }
+  if (t.dataset.grade !== undefined && practice.card) {
+    const g = +t.dataset.grade;
+    review(practice.card, g);
+    cls.stats.reviews++; if (g >= 3) cls.stats.correct++;
+    practice = { ...practice, card: null, revealed: false, typed: '', suggestion: null };
+    return commit();
+  }
+  if (t.id === 'flagCard' && practice.card) {
+    const c = practice.card; c.hidden = true;
+    cls.learn.typeWeight[c.type] = Math.max(0.3, (cls.learn.typeWeight[c.type] ?? 1) - 0.08);
+    c.srcIds?.forEach(id => cls.learn.sentWeight[id] = Math.max(0.3, (cls.learn.sentWeight[id] ?? 1) - 0.1));
+    practice.card = null; toast('Removed. It will make fewer questions like that.');
+    return commit();
+  }
+
+  // Cards
+  if (t.id === 'addCustom') {
+    const q = $('#customQ').value.trim(), a = $('#customA').value.trim();
+    if (!q || !a) return toast('Add both a question and an answer.');
+    cls.cards.push(makeCard(q, a, 'custom', null));
+    cls.qa.push({ id: uid(), q, a, vote: 2, time: Date.now(), custom: true });
+    toast('Question added'); return commit();
+  }
+  if (t.dataset.delcard) {
+    const c = cls.cards.find(x => x.id === t.dataset.delcard);
+    if (c) { c.hidden = true; if (c.type !== 'custom') cls.learn.typeWeight[c.type] = Math.max(0.3, (cls.learn.typeWeight[c.type] ?? 1) - 0.04); }
+    return commit();
+  }
+});
+
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  if (e.target.id === 'newClassForm') {
+    const name = $('#newClassName').value.trim(); if (!name) return;
+    const c = newClass(name); state.classes.push(c); state.activeId = c.id; state.tab = 'guides'; addingClass = false;
+    return commit();
+  }
+  if (e.target.id === 'renameForm') {
+    const cls = activeClass(); const name = $('#renameInput').value.trim();
+    if (cls && name) cls.name = name; renaming = false; return commit();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'askInput') { e.preventDefault(); doAsk(activeClass()); }
+  if (e.key === 'Escape' && addingClass) { addingClass = false; render(); }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'cardSearch') {
+    cardFilter = e.target.value; const pos = e.target.selectionStart;
+    render(); const s = $('#cardSearch'); s.focus(); s.setSelectionRange(pos, pos);
+  }
+});
+
+function doAsk(cls, forced) {
+  if (!cls) return;
+  const q = forced ?? $('#askInput').value.trim();
+  if (!q) return;
+  lastAnswer = { ...answerQuestion(cls, q), query: q, clsId: cls.id, showAlts: false, voted: false };
+  renderAnswer(cls);
+}
+
+// ---------------------------------------------------------------- Backup
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `studyforge-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('Backup downloaded');
+}
+$('#importFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    if (!Array.isArray(data.classes)) throw new Error();
+    // merge: keep existing classes, add or replace by id
+    data.classes.forEach(c => {
+      const i = state.classes.findIndex(x => x.id === c.id);
+      if (i >= 0) state.classes[i] = c; else state.classes.push(c);
+    });
+    state.activeId = state.activeId || state.classes[0]?.id || null;
+    Object.keys(indexCache).forEach(k => delete indexCache[k]);
+    toast(`Restored ${data.classes.length} classes`); commit();
+  } catch { toast('That file isn’t a StudyForge backup.'); }
+  e.target.value = '';
+});
+
+render();
+</script>
+</body>
+</html>
