@@ -1,0 +1,11 @@
+# Stock Market Analysis Bot — Python dependencies
+# Install with: pip install -r requirements.txt
+
+yfinance          # Market price data + historical OHLCV
+pandas            # DataFrame operations for technical analysis
+numpy             # Numerical operations
+requests          # HTTP calls to NewsAPI, Finnhub, Discord webhooks
+feedparser        # RSS/Atom feed parsing (Reuters, CNBC, WSJ, etc.)
+vaderSentiment    # Rule-based financial sentiment analysis
+python-dotenv     # Load .env file at runtime
+tweepy            # Twitter/X API v2 client
